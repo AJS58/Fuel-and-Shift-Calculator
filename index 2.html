@@ -1,0 +1,125 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fuel & Shift Tracker</title>
+<style>
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif;background:#edf3fb;color:#1b3450;padding:10px}
+.app{max-width:470px;margin:auto;background:#f7faff;border-radius:24px;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.2)}
+.header{background:linear-gradient(135deg,#1f66ff,#3f86ff);color:white;text-align:center;padding:22px}
+.header h1{margin:0;font-size:22px}.header p{margin:6px 0 0;font-size:12px}
+.content{padding:14px}.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:white;padding:6px;border-radius:16px;margin-bottom:14px}
+.tab{border:0;border-radius:12px;padding:12px;font-weight:900;background:white;color:#496483}.tab.active{background:#1f66ff;color:white}
+.panel{display:none}.panel.active{display:block}
+.card{background:white;border:1px solid #dfe9f6;border-radius:20px;padding:14px;margin-bottom:14px;box-shadow:0 8px 20px rgba(28,52,84,.08)}
+.field{display:grid;grid-template-columns:1.1fr .9fr;gap:10px;align-items:center;border-bottom:1px solid #edf2f8;padding:9px 0}
+.field:last-child{border-bottom:0}label{font-weight:900}small{display:block;color:#74869d}
+input{width:100%;padding:13px;border-radius:14px;border:1px solid #cad8ea;font-size:16px;font-weight:800}
+.btn{width:100%;border:0;border-radius:16px;padding:15px;font-weight:900;font-size:17px;color:white;margin-top:8px}
+.blue{background:#2468ff}.green{background:#359c38}.red{background:#c83b3b}.grey{background:#66758a}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric,.row{background:white;border:1px solid #dfe9f6;border-radius:16px;padding:13px;box-shadow:0 8px 20px rgba(28,52,84,.08)}
+.metric h3{font-size:12px;margin:0 0 6px;color:#587292;text-transform:uppercase}.value{font-size:22px;font-weight:900}
+.hero{border-radius:20px;padding:18px;margin-top:12px;color:white;font-size:30px;font-weight:900}.profit{background:#359c38}.loss{background:#c83b3b}
+.row{display:flex;justify-content:space-between;gap:8px;margin-bottom:9px}.row b{font-size:15px}.row span{font-weight:900;text-align:right}
+.positive{color:#1f8a2f}.negative{color:#c13131}.footer{text-align:center;color:#74869d;font-size:12px;padding:18px}
+@media(max-width:480px){.field,.grid{grid-template-columns:1fr}}
+@media print{.tabs,.btn{display:none}.panel{display:block!important}body{background:white}.app{box-shadow:none}}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="header"><h1>Fuel & Shift Tracker</h1><p>Created by A. Sinfield</p></div>
+<div class="content">
+<div class="tabs">
+<button class="tab active" onclick="tab('calc',this)">Fuel Calculator</button>
+<button class="tab" onclick="tab('shift',this)">Shift Tracker</button>
+</div>
+
+<div id="calc" class="panel active">
+<div class="card">
+<div class="field"><label>Order Number<small>manual entry</small></label><input id="order"></div>
+<div class="field"><label>Distance<small>miles</small></label><input id="distance" inputmode="decimal"></div>
+<div class="field"><label>Car MPG</label><input id="mpg" inputmode="decimal"></div>
+<div class="field"><label>Fuel Price<small>£ per litre</small></label><input id="price" inputmode="decimal"></div>
+<div class="field"><label>Payment Received<small>£</small></label><input id="payment" inputmode="decimal"></div>
+</div>
+<button class="btn blue" onclick="calculate()">Calculate</button>
+<div id="calcResults" style="display:none;margin-top:14px">
+<div class="grid">
+<div class="metric"><h3>Order</h3><div class="value" id="orderOut">--</div></div>
+<div class="metric"><h3>Fuel Used</h3><div class="value" id="fuelOut">0.00 L</div></div>
+<div class="metric"><h3>Cost / Mile</h3><div class="value" id="cpmOut">£0.00</div></div>
+<div class="metric"><h3>Fuel Cost</h3><div class="value" id="costOut">£0.00</div></div>
+</div>
+<div id="tripHero" class="hero profit">£0.00</div>
+</div>
+</div>
+
+<div id="shift" class="panel">
+<div class="card">
+<div class="row"><b>Shift Date</b><span id="shiftDate">--/--/----</span></div>
+<div class="grid">
+<button class="btn green" onclick="clockIn()">Clock In</button>
+<button class="btn red" onclick="clockOut()">Clock Out</button>
+</div>
+<div class="row"><b>Clock In</b><span id="clockInTime">--:--</span></div>
+<div class="row"><b>Clock Out</b><span id="clockOutTime">--:--</span></div>
+<div class="row"><b>Shift Duration</b><span id="duration">0h 0m</span></div>
+</div>
+
+<div class="grid">
+<div class="card" style="text-align:center"><h2>Inside</h2><div class="value" id="insideCount">0</div><button class="btn green" onclick="inside++;update()">+ Add Inside</button></div>
+<div class="card" style="text-align:center"><h2>Outside</h2><div class="value" id="outsideCount">0</div><button class="btn blue" onclick="outside++;update()">+ Add Outside</button></div>
+</div>
+
+<div class="card">
+<div class="field"><label>Hourly Rate<small>£</small></label><input id="hourly" inputmode="decimal" oninput="update()"></div>
+<div class="field"><label>Tips Earned<small>£</small></label><input id="tips" inputmode="decimal" oninput="update()"></div>
+<small>Outside delivery rate is calculated at £1.35.</small>
+</div>
+
+<div id="summary"></div>
+<div class="card"><b>Shift Report</b><div id="orders"></div></div>
+
+<button class="btn blue" onclick="addTrip()">+ Add Last Trip To Shift</button>
+<div id="shiftHero" class="hero profit">£0.00</div>
+
+<div class="card">
+<b>6-Day Working Week Report</b>
+<p style="color:#74869d;font-size:13px">Save each finished shift. Export as CSV, or use Print / Save PDF.</p>
+<button class="btn green" onclick="saveDay()">Save Today To 6-Day Report</button>
+<button class="btn blue" onclick="exportCSV()">Export CSV</button>
+<button class="btn grey" onclick="window.print()">Print / Save PDF</button>
+<div id="week"></div>
+</div>
+</div>
+
+<div class="footer">© 2026 Anthony Sinfield | AS Innovative Solutions</div>
+</div>
+</div>
+
+<script>
+let lastTrip=null,lastOrder="",inside=0,outside=0,tripPL=0,clockInDate=null,clockOutDate=null,shiftDate="",orderReport=[],weekReport=[];
+function money(v){return "£"+Number(v).toFixed(2)}
+function num(id){let v=document.getElementById(id).value;return v?Number(v.trim().replace(/,/g,".")):0}
+function time(d){return d?d.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):"--:--"}
+function date(d){return d?d.toLocaleDateString([],{day:"2-digit",month:"2-digit",year:"numeric"}):"--/--/----"}
+function hrs(){if(!clockInDate)return 0;let end=clockOutDate||new Date();let h=(end-clockInDate)/3600000;return h>0?h:0}
+function dur(h){let m=Math.floor(h*60);return Math.floor(m/60)+"h "+(m%60)+"m"}
+function tab(id,btn){document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));document.getElementById(id).classList.add("active");document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));btn.classList.add("active")}
+function save(){localStorage.setItem("fuelShiftTrackerV3",JSON.stringify({lastTrip,lastOrder,inside,outside,tripPL,clockInDate:clockInDate?clockInDate.toISOString():null,clockOutDate:clockOutDate?clockOutDate.toISOString():null,shiftDate,orderReport,weekReport,hourly:document.getElementById("hourly").value,tips:document.getElementById("tips").value}))}
+function load(){let s=localStorage.getItem("fuelShiftTrackerV3");if(!s)return;try{let x=JSON.parse(s);lastTrip=x.lastTrip??null;lastOrder=x.lastOrder||"";inside=+x.inside||0;outside=+x.outside||0;tripPL=+x.tripPL||0;clockInDate=x.clockInDate?new Date(x.clockInDate):null;clockOutDate=x.clockOutDate?new Date(x.clockOutDate):null;shiftDate=x.shiftDate||"";orderReport=Array.isArray(x.orderReport)?x.orderReport:[];weekReport=Array.isArray(x.weekReport)?x.weekReport:[];document.getElementById("hourly").value=x.hourly||"";document.getElementById("tips").value=x.tips||""}catch(e){}}
+function totals(){let hours=hrs(),deliveryIncome=inside*1+outside*1.35,rate=num("hourly"),tips=num("tips"),wages=hours*rate,total=deliveryIncome+wages+tips+tripPL,effective=hours?total/hours:0;return{date:shiftDate||date(new Date()),inside,outside,deliveries:inside+outside,deliveryIncome,rate,tips,hours,wages,tripPL,total,effective}}
+function update(){let t=totals();document.getElementById("insideCount").innerText=inside;document.getElementById("outsideCount").innerText=outside;document.getElementById("shiftDate").innerText=shiftDate||"--/--/----";document.getElementById("clockInTime").innerText=time(clockInDate);document.getElementById("clockOutTime").innerText=time(clockOutDate);document.getElementById("duration").innerText=dur(t.hours);document.getElementById("summary").innerHTML='<div class="row"><b>Total Deliveries</b><span>'+t.deliveries+'</span></div><div class="row"><b>Delivery Income</b><span>'+money(t.deliveryIncome)+'</span></div><div class="row"><b>Base Wages</b><span>'+money(t.wages)+'</span></div><div class="row"><b>Tips</b><span>'+money(t.tips)+'</span></div><div class="row"><b>Fuel P/L Added</b><span class="'+(tripPL>=0?'positive':'negative')+'">'+money(tripPL)+'</span></div><div class="row"><b>Effective Hourly</b><span>'+money(t.effective)+'/hr</span></div>';document.getElementById("orders").innerHTML=orderReport.length?orderReport.map(o=>'<div class="row"><b>Order '+o.order+'</b><span class="'+(o.result>=0?'positive':'negative')+'">'+(o.result>=0?'Profit ':'Loss ')+money(Math.abs(o.result))+'</span></div>').join(""):'<p style="color:#74869d">No orders added yet.</p>';document.getElementById("shiftHero").className="hero "+(t.total>=0?'profit':'loss');document.getElementById("shiftHero").innerText=(t.total>=0?'Profit ':'Loss ')+money(Math.abs(t.total));renderWeek();save()}
+function calculate(){let order=document.getElementById("order").value.trim(),distance=num("distance"),mpg=num("mpg"),price=num("price"),payment=num("payment");if(!order){alert("Enter order number");return}if(!distance||!mpg||!price||payment<0){alert("Enter valid numbers");return}if(price>10){alert("Fuel price looks too high. Use 1.44 not 144.4");return}let litres=(distance/mpg)*4.55,cost=litres*price,cpm=cost/distance,result=payment-cost;lastTrip=result;lastOrder=order;document.getElementById("calcResults").style.display="block";document.getElementById("orderOut").innerText=order;document.getElementById("fuelOut").innerText=litres.toFixed(2)+" L";document.getElementById("cpmOut").innerText=money(cpm);document.getElementById("costOut").innerText=money(cost);document.getElementById("tripHero").className="hero "+(result>=0?'profit':'loss');document.getElementById("tripHero").innerText=(result>=0?'Profit ':'Loss ')+money(Math.abs(result));save()}
+function clockIn(){clockInDate=new Date();clockOutDate=null;shiftDate=date(clockInDate);update()}
+function clockOut(){if(!clockInDate){alert("Clock in first");return}clockOutDate=new Date();update()}
+function addTrip(){if(lastTrip===null||!lastOrder){alert("Calculate a delivery first");return}tripPL+=lastTrip;orderReport.push({order:lastOrder,result:lastTrip});update()}
+function saveDay(){if(weekReport.length>=6){alert("6 days already saved. Export the report before starting another week.");return}let t=totals();weekReport.push({...t,orders:[...orderReport]});update();alert("Shift saved to 6-day report")}
+function renderWeek(){let el=document.getElementById("week");if(!weekReport.length){el.innerHTML='<p style="color:#74869d">No saved shifts yet.</p>';return}let total=0,del=0,hours=0;let html=weekReport.map((d,i)=>{total+=d.total;del+=d.deliveries;hours+=d.hours;return '<div class="row"><b>Day '+(i+1)+' - '+d.date+'<br><small>Deliveries '+d.deliveries+' | Hours '+d.hours.toFixed(2)+'</small></b><span class="'+(d.total>=0?'positive':'negative')+'">'+money(d.total)+'</span></div>'}).join("");let eff=hours?total/hours:0;html+='<div class="row"><b>6-Day Total<br><small>Deliveries '+del+' | Hours '+hours.toFixed(2)+' | Avg '+money(eff)+'/hr</small></b><span class="'+(total>=0?'positive':'negative')+'">'+money(total)+'</span></div>';el.innerHTML=html}
+function exportCSV(){let rows=[["Date","Inside","Outside","Deliveries","Delivery Income","Hours","Hourly Rate","Base Wages","Tips","Fuel P/L","Shift Total","Effective Hourly"]];weekReport.forEach(d=>rows.push([d.date,d.inside,d.outside,d.deliveries,d.deliveryIncome.toFixed(2),d.hours.toFixed(2),d.rate.toFixed(2),d.wages.toFixed(2),d.tips.toFixed(2),d.tripPL.toFixed(2),d.total.toFixed(2),d.effective.toFixed(2)]));rows.push([]);rows.push(["Order Report"]);rows.push(["Date","Order Number","Profit/Loss"]);weekReport.forEach(d=>(d.orders||[]).forEach(o=>rows.push([d.date,o.order,o.result.toFixed(2)])));let csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\n");let blob=new Blob([csv],{type:"text/csv"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="fuel-shift-6-day-report.csv";a.click();URL.revokeObjectURL(url)}
+load();update();setInterval(update,60000);
+</script>
+</body>
+</html>
